@@ -23,6 +23,6 @@ return [
 
     'clawbot' => [
         'base_url' => env('CLAWBOT_BASE_URL', 'http://localhost:3000'),
-        'api_key' => env('CLAWBOT_API_KEY'),
+        'api_key' => env('CLAWBOT_TOKEN'),
     ],
 ];

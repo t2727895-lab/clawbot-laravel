@@ -59,10 +59,10 @@ class ClawbotService
         set_time_limit(500); // 5 minutes
 
         try {
-            $baseUrl = env('CLAWBOT_BASE_URL');
-            $token = env('CLAWBOT_TOKEN');
+            $baseUrl = config('services.clawbot.base_url');
+            $apiKey = config('services.clawbot.api_key');
 
-            if (!$baseUrl || !$token) {
+            if (!$baseUrl || !$apiKey) {
                 Log::warning('Clawbot credentials not configured', [
                     'post_id' => $post->id,
                 ]);
@@ -74,10 +74,8 @@ class ClawbotService
                 ];
             }
 
-
             // Call OpenClaw chat completion with LinkedIn skill
-            $url = 'http://192.168.56.10:18789/v1/chat/completions';
-            $token = 'c90475d0be06b1b94f18b41affcf5409b8a5952d731a6cd8';
+            $url = $baseUrl . '/v1/chat/completions';
 
             // Extract plain text from HTML content
             $plainTextContent = $this->extractPlainText($post->content);
@@ -112,7 +110,7 @@ class ClawbotService
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // 10 second connection timeout
             curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $token
+                'Authorization: Bearer ' . $apiKey
             ));
 
             $response = curl_exec($ch);
