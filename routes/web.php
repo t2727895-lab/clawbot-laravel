@@ -25,6 +25,71 @@ Route::get('/check-env', function () {
     ];
 });
 
+Route::get('/test-clawbot', function () {
+    $baseUrl = config('services.clawbot.base_url');
+    $apiKey = config('services.clawbot.api_key');
+
+    if (!$baseUrl || !$apiKey) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Clawbot credentials not configured',
+            'base_url' => $baseUrl,
+            'api_key_exists' => !empty($apiKey),
+        ], 400);
+    }
+
+    try {
+        $url = $baseUrl . '/v1/chat/completions';
+
+        $data = [
+            'model' => 'openclaw',
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => 'Hello! This is a test message to verify the connection to OpenClaw.'
+                ]
+            ],
+            'stream' => false
+        ];
+
+        $payload = json_encode($data);
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey
+        ]);
+
+        $response = curl_exec($ch);
+        $curl_error = curl_error($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $responseData = json_decode($response, true);
+
+        return response()->json([
+            'success' => $http_code === 200 && !$curl_error,
+            'http_code' => $http_code,
+            'curl_error' => $curl_error,
+            'response' => $responseData,
+            'base_url' => $baseUrl,
+            'api_key_configured' => !empty($apiKey),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'base_url' => $baseUrl,
+            'api_key_exists' => !empty($apiKey),
+        ], 500);
+    }
+});
+
 Route::get('/', function () {
     // Redirect to login if not authenticated, otherwise to dashboard
     return auth()->check() ? redirect('/dashboard') : redirect('/login');
